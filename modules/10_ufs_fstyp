@@ -1,0 +1,19 @@
+#!/bin/sh
+
+for HOST
+do
+   for file in "$HOST"/disks/ufs/fstyp*
+   do
+      grep '^file system state' "$file" | while read state
+      do
+         case $state in
+            *-3)
+               echo "$HOST/ok/$state"
+               ;;
+            *) 
+               echo "$HOST/err/$state"
+               ;;
+         esac
+      done
+   done
+done
