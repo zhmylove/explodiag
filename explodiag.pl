@@ -77,7 +77,7 @@ exit 0 unless @HOSTS;
 for my $module (sort <$modules_dir/*>) {
    debug "Running $module...";
    for (split /\n/, `"$module" @HOSTS`) {
-      my ($host, $code, $text) = split /\//;
+      my ($host, $code, $text) = split /\//, $_, 3;
 
       my $module_name = (split /\//, $module)[-1];
       $modules{$module_name} = 1;

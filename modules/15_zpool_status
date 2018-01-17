@@ -2,7 +2,6 @@
 
 for HOST
 do
-   # for file in "$HOST"/disks/zfs/zpool_status*
    for file in "$HOST"/disks/zfs/zpool_list*
    do
       while read name size alloc free cap health stuff
