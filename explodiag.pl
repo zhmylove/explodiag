@@ -63,8 +63,12 @@ chdir "$DIR" or die $!;
 for (@ARGV) {
    s/.tar.gz$//;
    (my $to = $_) =~ s/^(?:[^.]*\.){2}(.*)-\d{4}\.\d\d\.\d\d\.\d\d\.\d\d$/$1/;
+
+   # TODO check if $_ eq $to
+
    debug "Renaming $_ to $to";
    rename "$_", "$to" or die $!;
+
    push @HOSTS, $to;
 }
 
@@ -74,8 +78,10 @@ for my $module (sort <$modules_dir/*>) {
    debug "Running $module...";
    for (split /\n/, `"$module" @HOSTS`) {
       my ($host, $code, $text) = split /\//;
+
       my $module_name = (split /\//, $module)[-1];
       $modules{$module_name} = 1;
+
       push @{ $result{$host}->{$module_name} }, [ $code, $text ];
    }
 }
@@ -85,6 +91,7 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
    for my $module_name (sort keys %modules) {
       print " === $module_name === \n";
       local $" = " | ";
+
       for (sort keys %result) {
          printf "%16s\n", $_;
          print " " x 16 . "@$_" . "\n" for @{ $result{$_}->{$module_name} };
@@ -92,7 +99,11 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
    }
 } elsif ($conf{OUTPUT} =~ /^dump$/i) {
    require Data::Dumper;
-   local $Data::Dumper::Purity = 1;
+
+   # Double use to avoid warning
+   local $Data::Dumper::Purity;
+   $Data::Dumper::Purity = 1;
+
    print Data::Dumper->Dump([\%result], ["explodiag"]);
 } elsif ($conf{OUTPUT} =~ /^html?$/i) {
    # TODO

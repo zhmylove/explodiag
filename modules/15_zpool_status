@@ -1,0 +1,52 @@
+#!/bin/sh
+
+for HOST
+do
+   # for file in "$HOST"/disks/zfs/zpool_status*
+   for file in "$HOST"/disks/zfs/zpool_list*
+   do
+      while read name size alloc free cap health stuff
+      do
+         # remove unnecessary spaces
+         status="$name $size $alloc $free $cap $health $stuff"
+
+         # skip the system in case of no pools
+         if [ "no pools available" = "$name $size $alloc" ] ;then
+            echo "$HOST/ok/NA"
+            continue
+         fi
+
+         # skip headings
+         [ "NAME SIZE ALLOC" = "$name $size $alloc" ] && continue
+
+         # the system has some pools
+         # check overall status
+         case $health in
+            ONLINE)
+               if [ $cap -ge 90 ] ;then
+                  echo "$HOST/warn/$status"
+               else
+                  echo "$HOST/ok/$status"
+               fi
+               ;;
+            *)
+               echo "$HOST/err/$status"
+               ;;
+         esac
+
+         # check drive errors
+         # be silent if no errors
+         sed -n '/NAME.*CKSUM/,/^$/p' "$HOST"/disks/zfs/zpool_status_-v* |
+         sed '1d;$d' | awk '
+         NF==5{
+         if ($3 + $4 + $5 > 0){print "warn "$0}
+         }
+         NF==2{
+         if ($2 != "AVAIL"){print "warn "$0}
+         }' | sed 's/  */ /g' |
+         while read err text ;do
+            echo "$HOST/$err/$text"
+         done
+      done < "$file"
+   done
+done
