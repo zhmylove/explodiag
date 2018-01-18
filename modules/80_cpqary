@@ -1,0 +1,15 @@
+#!/bin/sh
+
+for HOST
+do
+   export HOST
+   cat "$HOST"/messages/messages* | grep cpqary  | sort -u | perl -lne '
+   BEGIN{ our $ok = 1; }
+   /\[ID \d+ kern.notice\]\s*$/ && next;
+   /\[ID \d+ kern.notice\]\s*Surface Analysis Pass Information/ && next;
+   /\[ID \d+ kern.notice\]\s*NOTICE:\s*Smart Array.*Controller\s*$/ && next;
+   $ok = 0;
+   print "$ENV{HOST}/err/$_";
+   END{ print "$ENV{HOST}/ok/no cpqary anomalies found" if $ok; }
+   '
+done
