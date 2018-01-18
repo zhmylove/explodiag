@@ -1,0 +1,36 @@
+#!/bin/sh
+
+for HOST
+do
+   export HOST
+   cat "$HOST"/disks/iostat*E*out | paste - - - - - | perl -lne '
+   BEGIN{ our $ok = 1; our %err = (); }
+   my $count = 0;
+   my $disk = "";
+   s/\s+/ /g;
+   if ((($disk, $count) = /^(\w+).*Soft Errors: (\d+)/) && $count > 3) {
+      $err{$disk}->{soft} = $count;
+      $ok = 0;
+   }
+   if ((($disk, $count) = /^(\w+).*Hard Errors: (\d+)/) && $count > 3) {
+      $err{$disk}->{hard} = $count;
+      $ok = 0;
+   }
+   if ((($disk, $count) = /^(\w+).*Transport Errors: (\d+)/) && $count > 0) {
+      $err{$disk}->{transport} = $count;
+      $ok = 0;
+   }
+   if ((($disk, $count) = /^(\w+).*Media Error: (\d+)/) && $count > 0) {
+      $err{$disk}->{media} = $count;
+      $ok = 0;
+   }
+
+   END {
+   print "$ENV{HOST}/ok/iostat errors count too low" if $ok;
+   for my $disk (sort keys %err) {
+      printf "%s Soft: %d Hard: %d Transport: %d Media: %d\n",
+      "$ENV{HOST}/err/$disk",
+      map { $err{$disk}->{$_} } ("soft", "hard", "transport", "media");
+   }
+   } '
+done
