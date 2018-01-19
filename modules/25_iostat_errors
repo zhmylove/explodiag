@@ -3,25 +3,38 @@
 for HOST
 do
    export HOST
-   cat "$HOST"/disks/iostat*E*out | paste - - - - - | perl -lne '
+   cat "$HOST"/disks/iostat*E*out | paste - - - - - | perl -0l12ne '
    BEGIN{ our $ok = 1; our %err = (); }
-   my $count = 0;
-   my $disk = "";
+   s/\n//g;
    s/\s+/ /g;
-   if ((($disk, $count) = /^(\w+).*Soft Errors: (\d+)/) && $count > 3) {
+   my ($disk, $count);
+   my @arr; 
+
+   @arr = /(\w+)\s*Soft Errors: (\d+)/g;
+   while (($disk, $count) = (shift @arr, shift @arr) and defined $count) {
+      next if ($count == 0);
       $err{$disk}->{soft} = $count;
       $ok = 0;
    }
-   if ((($disk, $count) = /^(\w+).*Hard Errors: (\d+)/) && $count > 3) {
+
+   @arr = /(\w+)\s*Soft.*?Hard Errors: (\d+)/g;
+   while (($disk, $count) = (shift @arr, shift @arr) and defined $count) {
+      next if ($count == 0);
       $err{$disk}->{hard} = $count;
       $ok = 0;
    }
-   if ((($disk, $count) = /^(\w+).*Transport Errors: (\d+)/) && $count > 0) {
-      $err{$disk}->{transport} = $count;
+
+   @arr = /(\w+)\s*Soft.*?Transport Errors: (\d+)/g;
+   while (($disk, $count) = (shift @arr, shift @arr) and defined $count) {
+      next if ($disk == 0);
+      $err{$disk}->{transport} = $disk;
       $ok = 0;
    }
-   if ((($disk, $count) = /^(\w+).*Media Error: (\d+)/) && $count > 0) {
-      $err{$disk}->{media} = $count;
+
+   @arr = /(\w+)\s*Soft.*?Media Error: (\d+)/g;
+   while (($disk, $count) = (shift @arr, shift @arr) and defined $count) {
+      next if ($disk == 0);
+      $err{$disk}->{media} = $disk;
       $ok = 0;
    }
 
@@ -29,7 +42,7 @@ do
    print "$ENV{HOST}/ok/iostat errors count too low" if $ok;
    for my $disk (sort keys %err) {
       printf "%s Soft: %d Hard: %d Transport: %d Media: %d\n",
-      "$ENV{HOST}/err/$disk",
+      "$ENV{HOST}/warn/$disk",
       map { $err{$disk}->{$_} } ("soft", "hard", "transport", "media");
    }
    } '

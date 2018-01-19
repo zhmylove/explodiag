@@ -4,8 +4,17 @@ for HOST
 do
    for file in "$HOST"/disks/zfs/zpool_list*
    do
-      while read name size alloc free cap health stuff
+      while read name size alloc free cap ratio health stuff
       do
+         case $ratio in
+            [0-9.]*x)
+               :
+            ;;
+            *)
+               health=$ratio
+            ;;
+         esac
+
          # remove unnecessary spaces
          status="$name $size $alloc $free $cap $health $stuff"
 
