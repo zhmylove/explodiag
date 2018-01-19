@@ -11,10 +11,12 @@ my $_DEBUG      = 1;
 
 my $USAGE = "$0 <explorer.tar.gz ...>";
 
-our %conf;
-my @HOSTS;
-my %result;
-my %modules;
+our %conf;   # configuration hash
+my @HOSTS;   # hosts array
+my %result;  # module execution results
+my %modules; # module names
+my %total;   # host total status hash
+my %summary; # host / module statistics
 
 #TODO
 # force rm / interactive rm and avoid bumblebee issue #123
@@ -22,6 +24,7 @@ my %modules;
 
 # Print debug output
 sub debug { print STDERR @_, "\n" if $_DEBUG; }
+$_DEBUG = int $ENV{_DEBUG} if defined $ENV{_DEBUG};
 
 # Parse config file
 unless (my $rc = do $config_file) {
@@ -86,15 +89,49 @@ for my $module (sort <$modules_dir/*>) {
    }
 }
 
+# Calculate total and summary statuses
+for my $host (keys %result) {
+   my $status = "ok";
+
+   for my $module (keys %{$result{$host}}) {
+      my $module_status = "ok";
+
+      for my $result (@{$result{$host}->{$module}}) {
+         if ($result->[0] eq "err") {
+            $status = "err";
+            $module_status = "err";
+         } elsif ($result->[0] eq "warn") {
+            $status = "warn" if $status eq "ok";
+            $module_status = "warn" if $module_status eq "ok";
+         }
+      }
+
+      $summary{$host}->{$module} = $module_status;
+   }
+
+   $total{$host} = $status;
+}
+
 # Format output
 if ($conf{OUTPUT} =~ /^te?xt$/i) {
+   printf "%47s\n", " = Explodiag = ";
+
+   printf "\n%52s\n", " == Total statistics == ";
+   printf "%16s | %4s\n", $_, $total{$_} for sort keys %total;
+
+   printf "\n%55s\n", " == Per module statistics == ";
+   for my $host (sort keys %summary) {
+      printf "%16s | %32s | %4s\n", $host, $_, $summary{$host}->{$_} for
+      sort keys %{$summary{$host}};
+   }
+
+   printf "\n%54s\n", " == Detailed statistics == ";
    for my $module_name (sort keys %modules) {
       print " === $module_name === \n";
-      local $" = " | ";
 
       for (sort keys %result) {
          printf "%16s\n", $_;
-         print " " x 16 . "@$_" . "\n" for @{ $result{$_}->{$module_name} };
+         printf "%16s | %s\n", @$_ for @{ $result{$_}->{$module_name} };
       }
    }
 } elsif ($conf{OUTPUT} =~ /^dump$/i) {
@@ -104,7 +141,9 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
    local $Data::Dumper::Purity;
    $Data::Dumper::Purity = 1;
 
-   print Data::Dumper->Dump([\%result], ["explodiag"]);
+   print Data::Dumper->Dump([\%total], ["explodiag_brief"]);
+   print Data::Dumper->Dump([\%summary], ["explodiag_modules"]);
+   print Data::Dumper->Dump([\%result], ["explodiag_full"]);
 } elsif ($conf{OUTPUT} =~ /^html?$/i) {
    # TODO
 } else {
