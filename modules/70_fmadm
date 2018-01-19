@@ -3,6 +3,11 @@
 export HOST
 for HOST
 do
+   if [ ! -r "$HOST"/fma/fmadm-faulty-a.out ] ;then
+      echo "$HOST/ok/no fmadm output found"
+      continue
+   fi
+
    perl -lne '
    BEGIN{ our $ok = 1 }
    if (/^\w+.*\s[-\w]+\s+[-\w]+\s*(?:major|minor)\s*$/i) {

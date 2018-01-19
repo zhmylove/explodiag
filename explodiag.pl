@@ -7,7 +7,7 @@ use v5.8;
 
 my $config_file = './explodiag.conf';
 my $modules_dir = '~/explodiag/modules';
-my $_DEBUG      = 1;
+my $_DEBUG      = 0;
 
 my $USAGE = "$0 <explorer.tar.gz ...>";
 
@@ -35,7 +35,7 @@ unless (my $rc = do $config_file) {
 
 # Set default values
 my %default_conf = (
-   PREFIX  => "/tmp",
+   PREFIX  => "/var/tmp",
    DEST    => "explodiag",
    TAR     => "gtar",
    CLEANUP => 0,
@@ -44,11 +44,14 @@ my %default_conf = (
 );
 defined $conf{$_} or $conf{$_} = $default_conf{$_} for keys %default_conf;
 
+# Get some values from the environment
+$conf{OUTPUT} = $ENV{EXP_OUTPUT} if defined $ENV{EXP_OUTPUT};
+
 # Check @ARGV
 die "Usage: $USAGE\n" unless @ARGV;
 
 # Prepare temp directory
-my $DIR = "$conf{PREFIX}/$conf{DEST}";
+my $DIR = "$conf{PREFIX}/$conf{DEST}/";
 `rm $conf{RM_ARGS} "$DIR"` if -e $DIR;
 die "$DIR: already exists!\n" if -e $DIR;
 
@@ -65,6 +68,7 @@ chdir "$DIR" or die $!;
 # Rename extracted files to hostnames and fill @HOSTS
 for (@ARGV) {
    s/.tar.gz$//;
+   s/.*\///;
    (my $to = $_) =~ s/^(?:[^.]*\.){2}(.*)-\d{4}\.\d\d\.\d\d\.\d\d\.\d\d$/$1/;
 
    # TODO check if $_ eq $to

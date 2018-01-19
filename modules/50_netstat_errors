@@ -2,8 +2,8 @@
 
 for HOST
 do
-   awk -v HOST="$HOST" 'BEGIN{ok = 1}
-   END{if(ok == 1){ print HOST"/ok/error counters are too low" } }
+   awk 'BEGIN{ok = 1}
    $6+$8+$9+$10 > 10{ print HOST"/err/"$0; ok = 0 }
-   ' "$HOST"/netinfo/netstat-in.out
+   END{if(ok == 1){ print HOST"/ok/error counters are too low" } }
+   ' HOST="$HOST" "$HOST"/netinfo/netstat-in.out
 done

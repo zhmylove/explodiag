@@ -4,6 +4,11 @@ for HOST
 do
    for file in "$HOST"/disks/ufs/fstyp*
    do
+      if [ ! -r "$file" ] ;then
+         echo "$HOST/ok/no fstyp output found"
+         continue
+      fi
+
       grep '^file system state' "$file" | while read state
       do
          case $state in
