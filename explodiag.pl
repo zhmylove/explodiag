@@ -40,7 +40,7 @@ my %default_conf = (
    TAR     => "gtar",
    CLEANUP => 0,
    RM_ARGS => "-rf",
-   OUTPUT  => "text",
+   OUTPUT  => "html",
 );
 defined $conf{$_} or $conf{$_} = $default_conf{$_} for keys %default_conf;
 
@@ -145,7 +145,55 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
    print Data::Dumper->Dump([\%summary], ["explodiag_modules"]);
    print Data::Dumper->Dump([\%result], ["explodiag_full"]);
 } elsif ($conf{OUTPUT} =~ /^html?$/i) {
-   # TODO
+   my $modules_count = 0+(keys %modules);
+   print "<!DOCTYPE html><html><head><title>Explodiag</title>";
+
+   print "<style type=text/css>
+   table { border-collapse: collapse; }
+   td { border: 1px solid black; padding: 4px; }
+   .ok { background-color: lightgreen; }
+   .warn { background-color: yellow; }
+   .err { background-color: darksalmon; }
+   </style>";
+   
+   print "</head><body>\n";
+   
+   print "<hr><h3>Total statistics</h3>\n";
+   print "<table>\n";
+   printf "<tr><td>%s</td><td class=%s>%s</td></tr>", $_,
+      $total{$_}, $total{$_} for sort keys %total;
+   print "</table>\n";
+
+   print "<hr><h3>Per module statistics</h3>\n";
+   print "<table>\n";
+   for my $host (sort keys %summary) {
+      my $line = 0;
+      for (sort keys %{$summary{$host}}) {
+         print "<tr>";
+         print "<td rowspan=$modules_count>$host</td>" unless $line++;
+         printf "<td>%s</td><td class=%s>%s</td></tr>\n", $_,
+         $summary{$host}->{$_}, $summary{$host}->{$_};
+      }
+   }
+   print "</table>\n";
+
+   print "<hr><h3>Detailed statistics</h3>\n";
+   for my $module_name (sort keys %modules) {
+      print "<h4>$module_name</h4>\n";
+
+      print "<table>\n";
+      for (sort keys %result) {
+         my @arr = @{ $result{$_}->{$module_name} };
+         my $line = 0;
+
+         print "<tr>";
+         printf "<td rowspan=" . (0+@arr) . ">$_</td>" unless $line++;
+         printf "<td class=%s>%s</td><td>%s</td></tr>\n", $_->[0], @$_ for @arr;
+      }
+      print "</table>\n";
+   }
+
+   print "<hr><br>With love, KorG.</body></html>";
 } else {
    die "Unknown output format: $conf{OUTPUT}\n";
 }
