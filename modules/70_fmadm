@@ -1,0 +1,15 @@
+#!/bin/sh
+
+export HOST
+for HOST
+do
+   perl -lne '
+   BEGIN{ our $ok = 1 }
+   if (/^\w+.*\s[-\w]+\s+[-\w]+\s*(?:major|minor)\s*$/i) {
+      $ok = 0;
+      s/\s+/ /g;
+      print "$ENV{HOST}/" . (/major\s*$/i ? "err" : "warn") . "/$_";
+   }
+   END{ print "$ENV{HOST}/ok/no fmadm events" if $ok }
+   ' "$HOST"/fma/fmadm-faulty-a.out
+done
