@@ -1,0 +1,28 @@
+#!/bin/sh
+
+export HOST
+export OK
+for HOST
+do
+   if [ ! -r "$HOST"/cluster/config/cluster-status-v.out ] ;then
+      echo "$HOST/ok/no cluster status output found"
+      continue
+   fi
+
+   OK=1
+
+   # Check if any offline quorum devices
+   sed -n '/^=.*Cluster Quorum/,/^=/{/Offline/p;}' \
+      "$HOST"/cluster/config/cluster-status-v.out |
+   grep . >/dev/null && OK=0 echo "$HOST/err/quorum offline"
+
+   # Check for general errors
+   perl -lne '
+   BEGIN{ our $ok=1; }
+   if (/unavail/i || /fault/i || /fail/i || /err/i || /warn/i || /crit/i) {
+      print "$ENV{HOST}/err/$_";
+      $ok = 0;
+   }
+   END{ print "$ENV{HOST}/ok/no cluster errors found" if $ok; }
+   ' "$HOST"/cluster/config/cluster-status-v.out
+done
