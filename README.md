@@ -6,6 +6,7 @@ explodiag -- utility to parse SUNWexplo output archives
 
 ```text
 $ explodiag <explorer.tar.gz ...>
+$ EXP_CLEANUP=1 EXP_EXTRACT=0 explodiag <explorer_dir ...>
 ```
 
 # Description
@@ -25,5 +26,7 @@ Explodiag supports three STDOUT output formats:
 
 | Name | Comment |
 |-|-|
-| EXP_OUTPUT | Output format |
+| EXP_OUTPUT | Output format (*html*, text, dump) |
+| EXP_CLEANUP | Delete temporary files after parsing (*0* 1) |
+| EXP_EXTRACT | Extract files before parsing (*1* 0) |
 | _DEBUG | Debug level |

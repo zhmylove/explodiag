@@ -37,6 +37,7 @@ unless (my $rc = do $config_file) {
 my %default_conf = (
    PREFIX  => "/var/tmp",
    DEST    => "explodiag",
+   EXTRACT => 1,
    TAR     => "gtar",
    CLEANUP => 0,
    RM_ARGS => "-rf",
@@ -46,6 +47,8 @@ defined $conf{$_} or $conf{$_} = $default_conf{$_} for keys %default_conf;
 
 # Get some values from the environment
 $conf{OUTPUT} = $ENV{EXP_OUTPUT} if defined $ENV{EXP_OUTPUT};
+$conf{CLEANUP} = $ENV{EXP_CLEANUP} if defined $ENV{EXP_CLEANUP};
+$conf{EXTRACT} = $ENV{EXP_EXTRACT} if defined $ENV{EXP_EXTRACT};
 
 # Check @ARGV
 die "Usage: $USAGE\n" unless @ARGV;
@@ -58,8 +61,13 @@ die "$DIR: already exists!\n" if -e $DIR;
 # Extract explorers to temp dir and chdir() there
 mkdir "$DIR" or die $!;
 for (@ARGV) {
-   `$conf{TAR} -C "$DIR" -xf "$_"`;
-   die "Error extracting $_" if $?;
+   if ($conf{EXTRACT}) {
+      `$conf{TAR} -C "$DIR" -xf "$_"`;
+      die "Error extracting $_" if $?;
+   } else {
+      `ln -s "$_" "$DIR"`;
+      die "Error linking $_" if $?;
+   }
 }
 
 # Chdir to destination directory
@@ -68,6 +76,7 @@ chdir "$DIR" or die $!;
 # Rename extracted files to hostnames and fill @HOSTS
 for (@ARGV) {
    s/.tar.gz$//;
+   s/\/$//;
    s/.*\///;
    (my $to = $_) =~ s/^(?:[^.]*\.){2}(.*)-\d{4}\.\d\d\.\d\d\.\d\d\.\d\d$/$1/;
 
