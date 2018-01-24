@@ -1,13 +1,19 @@
 #!/bin/sh
 
+export HOST
 for HOST
 do
-   export HOST
-   cat "$HOST"/messages/messages* | grep cpqary  | sort -u | perl -lne '
+   perl -pe 's/^.*?\Q$ENV{HOST}\E\s*//' "$HOST"/messages/messages* | 
+   grep cpqary  | sort -u | perl -lne '
    BEGIN{ our $ok = 1; }
+
+   /genunix: .ID \d+ kern.info. cpqary\d+ is \/pci[@,\w\/\s]*$/ && next;
+   /(?:npe|pcieb): .ID \d+ kern.info.*PCI.*device.*cpqary\d+\s*$/ && next;
+   /scsi: .ID \d+ kern.info.\ssd\d+\sat cpqary\d+: target \d+ lun \d+/ && next;
    /\[ID \d+ kern.notice\]\s*$/ && next;
    /\[ID \d+ kern.notice\]\s*Surface Analysis Pass Information/ && next;
    /\[ID \d+ kern.notice\]\s*NOTICE:\s*Smart Array.*Controller\s*$/ && next;
+
    $ok = 0;
    print "$ENV{HOST}/err/$_";
    END{ print "$ENV{HOST}/ok/no cpqary anomalies found" if $ok; }

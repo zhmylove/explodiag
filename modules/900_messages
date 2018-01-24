@@ -1,0 +1,21 @@
+#!/bin/sh
+
+export HOST
+for HOST
+do
+   if [ ! -r "$HOST"/messages/messages* ] ;then
+      echo "$HOST/ok/no messages output found"
+      continue
+   fi
+
+   # Check for general errors
+   perl -pe 's/^.*?\Q$ENV{HOST}\E\s*//' "$HOST"/messages/messages* |
+   perl -pe 's/\d{2,}/***/g' | sort | uniq -c | sort -n | perl -lne '
+   BEGIN{ our $ok=1; }
+   if (/unavail/i || /fault/i || /fail/i || /err/i || /warn/i || /crit/i) {
+      print "$ENV{HOST}/warn/$_";
+      $ok = 0;
+   }
+   END{ print "$ENV{HOST}/ok/no messages errors found" if $ok; }
+   '
+done

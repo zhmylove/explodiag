@@ -90,7 +90,10 @@ for (@ARGV) {
 
 # Run modules
 exit 0 unless @HOSTS;
-for my $module (sort <$modules_dir/*>) {
+for my $module (sort {
+      my ($c, $d) = ($a =~ /(\d+)/, $b =~ /(\d+)/);
+      int $c <=> int $d
+   } <$modules_dir/*>) {
    debug "Running $module...";
    for (split /\n/, `"$module" @HOSTS`) {
       my ($host, $code, $text) = split /\//, $_, 3;
@@ -135,11 +138,17 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
    printf "\n%55s\n", " == Per module statistics == ";
    for my $host (sort keys %summary) {
       printf "%16s | %32s | %4s\n", $host, $_, $summary{$host}->{$_} for
-      sort keys %{$summary{$host}};
+      sort {
+         my ($c, $d) = ($a =~ /(\d+)/, $b =~ /(\d+)/);
+         int $c <=> int $d
+      } keys %{$summary{$host}};
    }
 
    printf "\n%54s\n", " == Detailed statistics == ";
-   for my $module_name (sort keys %modules) {
+   for my $module_name (sort {
+         my ($c, $d) = ($a =~ /(\d+)/, $b =~ /(\d+)/);
+         int $c <=> int $d
+      } keys %modules) {
       print " === $module_name === \n";
 
       for (sort keys %result) {
@@ -181,7 +190,10 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
    print "<table>\n";
    for my $host (sort keys %summary) {
       my $line = 0;
-      for (sort keys %{$summary{$host}}) {
+      for (sort {
+         my ($c, $d) = ($a =~ /(\d+)/, $b =~ /(\d+)/);
+         int $c <=> int $d
+      } keys %{$summary{$host}}) {
          print "<tr>";
          print "<td rowspan=$modules_count>$host</td>" unless $line++;
          printf "<td>%s</td><td class=%s>%s</td></tr>\n", $_,
@@ -191,7 +203,10 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
    print "</table>\n";
 
    print "<hr><h3>Detailed statistics</h3>\n";
-   for my $module_name (sort keys %modules) {
+   for my $module_name (sort {
+         my ($c, $d) = ($a =~ /(\d+)/, $b =~ /(\d+)/);
+         int $c <=> int $d
+      } keys %modules) {
       print "<h4>$module_name</h4>\n";
 
       print "<table>\n";

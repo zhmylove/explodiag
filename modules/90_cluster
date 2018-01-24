@@ -23,6 +23,6 @@ do
       print "$ENV{HOST}/err/$_";
       $ok = 0;
    }
-   END{ print "$ENV{HOST}/ok/no cluster errors found" if $ok; }
+   END{ print "$ENV{HOST}/ok/no cluster errors found" if $ok && $ENV{OK}; }
    ' "$HOST"/cluster/config/cluster-status-v.out
 done
