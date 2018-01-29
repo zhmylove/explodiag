@@ -13,7 +13,7 @@ do
    perl -pe 's/\d{2,}/***/g' | sort | uniq -c | sort -n | perl -lne '
    BEGIN{ our $ok=1; }
    if (/unavail/i || /fault/i || /fail/i || /err/i || /warn/i || /crit/i) {
-      print "$ENV{HOST}/warn/$_";
+      print "$ENV{HOST}/messages/$_";
       $ok = 0;
    }
    END{ print "$ENV{HOST}/ok/no messages errors found" if $ok; }

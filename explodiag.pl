@@ -119,6 +119,9 @@ for my $host (keys %result) {
          } elsif ($result->[0] eq "warn") {
             $status = "warn" if $status eq "ok";
             $module_status = "warn" if $module_status eq "ok";
+         } elsif ($result->[0] eq "messages") {
+            $status = "messages" if $status eq "ok";
+            $module_status = "messages" if $module_status eq "ok";
          }
       }
 
@@ -173,16 +176,18 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
    print "<style type=text/css>
    table { border-collapse: collapse; }
    td { border: 1px solid black; padding: 4px; }
+   a { text-decoration: none; color: black; }
    .ok { background-color: lightgreen; }
    .warn { background-color: yellow; }
    .err { background-color: darksalmon; }
+   .messages { background-color: skyblue; }
    </style>";
    
    print "</head><body>\n";
    
    print "<hr><h3>Total statistics</h3>\n";
    print "<table>\n";
-   printf "<tr><td>%s</td><td class=%s>%s</td></tr>", $_,
+   printf "<tr><td><a href=#%s>%s</a></td><td class=%s>%s</td></tr>", $_, $_,
       $total{$_}, $total{$_} for sort keys %total;
    print "</table>\n";
 
@@ -195,9 +200,9 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
          int $c <=> int $d
       } keys %{$summary{$host}}) {
          print "<tr>";
-         print "<td rowspan=$modules_count>$host</td>" unless $line++;
-         printf "<td>%s</td><td class=%s>%s</td></tr>\n", $_,
-         $summary{$host}->{$_}, $summary{$host}->{$_};
+         print "<td id=$host rowspan=$modules_count>$host</td>" unless $line++;
+         printf "<td><a href=#%s>%s</a></td><td class=%s>%s</td></tr>\n", $_,
+         $_, $summary{$host}->{$_}, $summary{$host}->{$_};
       }
    }
    print "</table>\n";
@@ -207,7 +212,7 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
          my ($c, $d) = ($a =~ /(\d+)/, $b =~ /(\d+)/);
          int $c <=> int $d
       } keys %modules) {
-      print "<h4>$module_name</h4>\n";
+      print "<h4 id=$module_name>$module_name</h4>\n";
 
       print "<table>\n";
       for (sort keys %result) {
@@ -216,7 +221,11 @@ if ($conf{OUTPUT} =~ /^te?xt$/i) {
 
          print "<tr>";
          printf "<td rowspan=" . (0+@arr) . ">$_</td>" unless $line++;
-         printf "<td class=%s>%s</td><td>%s</td></tr>\n", $_->[0], @$_ for @arr;
+         printf "<td class=%s>%s</td><td>%s</td></tr>\n", $_->[0], @$_ for sort
+         {
+            my ($c, $d) = ($a->[1] =~ /(\d+)/, $b->[1] =~ /(\d+)/);
+            int $d <=> int $c
+         } @arr;
       }
       print "</table>\n";
    }
