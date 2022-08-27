@@ -62,7 +62,7 @@ my $DIR = "$conf{PREFIX}/$conf{DEST}/";
 die "$DIR: already exists!\n" if -e $DIR;
 
 # Extract explorers to temp dir and chdir() there
-mkdir "$DIR" or die $!;
+mkdir $DIR or die $!;
 for (@ARGV) {
    if ($conf{EXTRACT}) {
       `$conf{TAR} -C "$DIR" -xf "$_"`;
@@ -74,19 +74,25 @@ for (@ARGV) {
 }
 
 # Chdir to destination directory
-chdir "$DIR" or die $!;
+chdir $DIR or die $!;
 
 # Rename extracted files to hostnames and fill @HOSTS
 for (@ARGV) {
    s/.tar.gz$//;
    s/\/$//;
    s/.*\///;
-   (my $to = $_) =~ s/^(?:[^.]*\.){2}(.*)-\d{4}\.\d\d\.\d\d\.\d\d\.\d\d$/$1/;
+   my $to = $_;
 
-   # TODO check if $_ eq $to
-
-   debug "Renaming $_ to $to";
-   rename "$_", "$to" or die $!;
+   if ($to =~ s/^(?:[^.]*\.){2}(.*)-\d{4}\.\d\d\.\d\d\.\d\d\.\d\d$/$1/) {
+      # We're dealing with fully qualified explorer name
+      debug "Renaming $_ to $to";
+      $_ ne $to and (rename $_, $to or die $!);
+   } else {
+      # Looks like the name is not in a proper format
+      die 'You must specify explorer name in a proper format, either a file' .
+      'explorer.12345678.hostname-2007.09.01.06.13.tar.gz, or a directory' .
+      'explorer.12345678.hostname-2007.09.01.06.13/';
+   }
 
    push @HOSTS, $to;
 }
