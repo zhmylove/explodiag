@@ -4,9 +4,12 @@
 use strict;
 use warnings;
 use v5.8;
+use FindBin;
+
+chdir $FindBin::Bin or die $!;
 
 my $config_file = './explodiag.conf';
-my $modules_dir = '~/explodiag/modules';
+my $modules_dir = './modules';
 my $_DEBUG      = 0;
 
 my $USAGE = "$0 <explorer.tar.gz ...>";

@@ -5,7 +5,7 @@ explodiag -- utility to parse SUNWexplo output archives
 # Synopsis
 
 ```text
-$ explodiag <explorer.tar.gz ...>
+$ explodiag <explorer.SERIAL.HOSTNAME-DATE.tar.gz ...>
 $ EXP_CLEANUP=1 EXP_EXTRACT=0 explodiag <explorer_dir ...>
 ```
 
@@ -16,6 +16,12 @@ presents the results in handsome form.  The utility architecture is built in a
 module manner to simplify any functional improvements.  Please find tunable
 parameters in a config file which location is specified inside *explodiag.pl*
 as well as in environment variables (see below).
+
+# Current limitations
+
+When you specify explorer archives as a filenames, please consider using fully
+qualified names like `explorer.12345678.hostname-2007.09.01.06.13.tar.gz` as the
+script currently tries to extract hostname part from it.
 
 # Output formats
 
